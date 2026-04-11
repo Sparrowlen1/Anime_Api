@@ -8,12 +8,14 @@ const viewed = document.getElementById("recentlyviewed");
 
 button.addEventListener("click", () => {
   const question = input.value;
+  input.value = ""; //this will clear the input field 
   fetchAnime(question);
 });
 
 input.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     const question = input.value;
+    input.value = "";
     fetchAnime(question);
   }
 });
@@ -29,13 +31,13 @@ async function fetchAnime(question) {
 function displayAnime(animeList) {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = "";
-  animeList.slice(0, 6).forEach((anime) => {
+  animeList.forEach((anime) => {
     const card = document.createElement("div");
     card.classList.add("anime-card");
     card.innerHTML = `
             <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
             <h3>${anime.title}</h3>
-            <p>${anime.synopsis ? anime.synopsis.slice(0, 10) : "No description"}...</p>
+            <p>${anime.synopsis ? anime.synopsis.slice(0, 20) : "No description"}...</p>
       <span>Episodes: ${anime.episodes || "Unknown"}</span>
         `;
     resultsContainer.appendChild(card);
@@ -52,5 +54,16 @@ genres.addEventListener("change", ()=>{
 async function fetchGenre(genress){
     const res = await fetch(`https://api.jikan.moe/v4/anime?genres=${genress}`);
     const data = await res.json();
-    displayAnime(data.data.slice(0,6));
+    displayAnime(data.data.slice(0,8));
+}
+
+
+homebutton.addEventListener("click",()=>{
+    fetchHomeAnime();
+})
+
+async function fetchHomeAnime(){
+    const res = await fetch(`https://api.jikan.moe/v4/top/anime`);
+    const data = await res.json();
+    displayAnime(data.data.slice(0,12));
 }
