@@ -74,3 +74,41 @@ header{
     background-color: #c4b5fd;
     border-color: #6f48e1;
 }
+.search{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.search input{
+    padding: 10px 15px;
+    border: none;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    width: 380px;
+}
+.search input::placeholder{
+    color: rgba(167,139,250,0.6);
+    font-weight: bolder;
+    font-size: 15px;
+}
+input:focus {
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+  outline: none;
+}
+.search input:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+.search button{
+    padding: 10px 15px;
+    border: none;
+    border-radius: 20px;
+    background-color: #a78bfa;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.search button:hover {
+    background-color: #c4b5fd;
+}
