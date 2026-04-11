@@ -1,5 +1,10 @@
 const input = document.getElementById("searchinput");
 const button = document.getElementById("searchbtn");
+const genres = document.getElementById("genres");
+const favourite = document.getElementById("favourite");
+const homebutton = document.getElementById("homebutton");
+const viewed = document.getElementById("recentlyviewed");
+
 
 button.addEventListener("click", () => {
   const question = input.value;
@@ -30,9 +35,22 @@ function displayAnime(animeList) {
     card.innerHTML = `
             <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
             <h3>${anime.title}</h3>
-            <p>${anime.synopsis ? anime.synopsis.slice(0, 100) : "No description"}...</p>
+            <p>${anime.synopsis ? anime.synopsis.slice(0, 10) : "No description"}...</p>
       <span>Episodes: ${anime.episodes || "Unknown"}</span>
         `;
     resultsContainer.appendChild(card);
   });
+}
+
+
+// now we in the genre part
+
+genres.addEventListener("change", ()=>{
+    const genress=genres.value;
+    fetchGenre(genress)
+})
+async function fetchGenre(genress){
+    const res = await fetch(`https://api.jikan.moe/v4/anime?genres=${genress}`);
+    const data = await res.json();
+    displayAnime(data.data.slice(0,6));
 }
