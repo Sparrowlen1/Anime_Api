@@ -59,8 +59,8 @@ async function fetchAnime(question) {
     currentAnimeList = data.data;
     displayAnime(currentAnimeList);
   } catch (error) {
-    console.error("Search error:", error);
-    displayMessage(`Error searching for "${question}". Please try again later.`);
+    console.error("search error:", error);
+    displayMessage(`error searching for "${question}". Please try again later.`);
   }
 }
 
