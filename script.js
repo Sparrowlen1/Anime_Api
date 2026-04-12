@@ -38,6 +38,7 @@ function displayMessage(message) {
   resultsContainer.innerHTML = `<div class="message">${message}</div>`;
 }
 
+// http get request kwa the external Api
 async function fetchAnime(question) {
   try {
     const resultsContainer = document.getElementById("results");
@@ -174,7 +175,7 @@ function toggleFavouriteFromDetail(malId) {
 function addToRecentlyViewed(anime) {
   let recent = getRecentlyViewed();
   recent = recent.filter(a => a.mal_id !== anime.mal_id);
-  recent.unshift(anime);
+  recent.unshift(anime);//simulated this adds at the begining simulates both update and patch
   if (recent.length > 10) {
     recent = recent.slice(0, 10);
   }
@@ -203,9 +204,9 @@ function toggleFavourite(anime) {
   const exists = favs.some(a => a.mal_id === anime.mal_id);
   
   if (exists) {
-    favs = favs.filter(a => a.mal_id !== anime.mal_id);
+    favs = favs.filter(a => a.mal_id !== anime.mal_id);//simulates delete
   } else {
-    favs.push(anime);
+    favs.push(anime);//simulates the post operation by pushing na creating data
   }
   localStorage.setItem("favourites", JSON.stringify(favs));
 }
@@ -233,6 +234,7 @@ genres.addEventListener("change", () => {
   fetchGenre(genress);
 });
 
+// get request from the api for genre based seachr
 async function fetchGenre(genress) {
   try {
     const resultsContainer = document.getElementById("results");
@@ -260,6 +262,7 @@ homebutton.addEventListener("click", () => {
   fetchHomeAnime();
 });
 
+// get request for top-rated anime currently
 async function fetchHomeAnime() {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = '<div class="loading">LOADING SPARROW ANIME...</div>';
