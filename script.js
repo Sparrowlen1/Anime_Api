@@ -1,123 +1,293 @@
 const input = document.getElementById("searchinput");
 const button = document.getElementById("searchbtn");
 const genres = document.getElementById("genres");
-const favourite = document.getElementById("favourite");
+const favourites = document.getElementById("favourite");
 const homebutton = document.getElementById("homebutton");
 const viewed = document.getElementById("recentlyviewed");
 
+// Track current view to refresh correctly
+let currentAnimeList = [];
+let previousViewList = [];
 
 button.addEventListener("click", () => {
-  const question = input.value;
-  input.value = ""; //this will clear the input field 
+  const question = input.value.trim();
+  
+  if (question === "") {
+    displayMessage("Please enter an anime name");
+    return;
+  }
+  input.value = "";
   fetchAnime(question);
 });
 
-input.addEventListener("keypress", (e) => {
+input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
-    const question = input.value;
+    const question = input.value.trim();
+    
+    if (question === "") {
+      displayMessage("Please enter an anime name");
+      return;
+    }
     input.value = "";
     fetchAnime(question);
   }
 });
-// now lets fetch from the jikan api
-async function fetchAnime(question) {
-  const res = await fetch(`https://api.jikan.moe/v4/anime?q=${question}`);
-  const data = await res.json();
 
-  displayAnime(data.data);
+function displayMessage(message) {
+  const resultsContainer = document.getElementById("results");
+  resultsContainer.innerHTML = `<div class="message">${message}</div>`;
 }
 
-// now lets display the anime on the page
-function displayAnime(animeList) {
+async function fetchAnime(question) {
+  try {
+    const resultsContainer = document.getElementById("results");
+    resultsContainer.innerHTML = '<div class="loading">Searching for anime...</div>';
+    
+    const encodedQuestion = encodeURIComponent(question);
+    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);
+    
+    if (!res.ok) {
+      throw new Error(`API returned ${res.status}`);
+    }
+    
+    const data = await res.json();
+    if (!data || !data.data || data.data.length === 0) {
+      displayMessage(`No results found for "${question}". Try a different anime name.`);
+      return;
+    }
+    
+    currentAnimeList = data.data;
+    displayAnime(currentAnimeList);
+  } catch (error) {
+    console.error("Search error:", error);
+    displayMessage(`Error searching for "${question}". Please try again later.`);
+  }
+}
+
+function displayAnime(animeList, fromRecentlyViewed = false) {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = "";
+  
+  if (!animeList || animeList.length === 0) {
+    displayMessage("No anime to display");
+    return;
+  }
+  
+  // Save current list for back navigation
+  previousViewList = animeList;
+  
   animeList.forEach((anime) => {
+    const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
     const card = document.createElement("div");
     card.classList.add("anime-card");
     card.innerHTML = `
-            <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
-            <h3>${anime.title}</h3>
-            <p>${anime.synopsis ? anime.synopsis.slice(0, 20) : "No description"}...</p>
-      <span>Episodes: ${anime.episodes || "Unknown"}</span>
-        `;
+      <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}">
+      <h3>${anime.title}</h3>
+      <p>${anime.synopsis ? anime.synopsis.slice(0, 60) + "..." : "No description"}</p>
+      <span> ${anime.episodes || "Unknown"} eps</span>
+      <i class="fa-heart fav-icon ${isFav ? "fa-solid active" : "fa-regular"}"></i>
+    `;
+    
+    // Make entire card clickable to view details
+    card.addEventListener("click", (e) => {
+      if (e.target.classList.contains("fav-icon")) {
+        return;
+      }
+      addToRecentlyViewed(anime);
+      showAnimeDetails(anime);
+    });
+    
+    const heart = card.querySelector(".fav-icon");
+    heart.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFavourite(anime);
+      if (fromRecentlyViewed) {
+        loadRecentlyViewed();
+      } else {
+        displayAnime(animeList);
+      }
+    });
     resultsContainer.appendChild(card);
   });
 }
 
-
-// now we in the genre part
-
-genres.addEventListener("change", ()=>{
-    const genress=genres.value;
-    fetchGenre(genress)
-})
-async function fetchGenre(genress){
-    const res = await fetch(`https://api.jikan.moe/v4/anime?genres=${genress}`);
-    const data = await res.json();
-    displayAnime(data.data.slice(0,8));
+function showAnimeDetails(anime) {
+  const resultsContainer = document.getElementById("results");
+  const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
+  
+  // synopsis for detail view ni shorter
+  const shortSynopsis = anime.synopsis ? anime.synopsis.slice(0, 15) + "..." : "No synopsis available.";
+  
+  resultsContainer.innerHTML = `
+    <div class="anime-detail">
+      <button class="back-button" onclick="window.goBackToResults()"> Back to Results</button>
+      <div class="detail-content">
+        <div class="detail-left">
+          <img src="${anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url}" alt="${anime.title}">
+          <button class="favourite-detail-btn ${isFav ? 'active' : ''}" onclick="window.toggleFavouriteFromDetail(${anime.mal_id})">
+            <i class="fa-heart ${isFav ? 'fa-solid' : 'fa-regular'}"></i>
+            ${isFav ? ' Remove from Favourites' : ' Add to Favourites'}
+          </button>
+        </div>
+        <div class="detail-right">
+          <h1>${anime.title}</h1>
+          ${anime.title_english ? `<h3>${anime.title_english}</h3>` : ''}
+          
+          <div class="detail-stats">
+            <div class="stat"> ${anime.score || 'SPARROW'}</div>
+            <div class="stat"> ${anime.episodes || 'Unknown'}</div>
+            <div class="stat"> ${anime.year || 'N/A'}</div>
+            <div class="stat"> ${anime.status || 'Unknown'}</div>
+          </div>
+          
+          <div class="detail-genres">
+            <strong>Genres:</strong> ${anime.genres?.map(g => g.name).join(', ') || 'N/A'}
+          </div>
+          
+          <div class="detail-synopsis">
+            <strong>Synopsis:</strong>
+            <p>${shortSynopsis}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  window.currentDetailAnime = anime;
 }
 
-
-homebutton.addEventListener("click",()=>{
+function goBackToResults() {
+  if (previousViewList && previousViewList.length > 0) {
+    displayAnime(previousViewList);
+  } else {
     fetchHomeAnime();
-})
-
-async function fetchHomeAnime(){
-    const res = await fetch(`https://api.jikan.moe/v4/top/anime`);
-    const data = await res.json();
-    displayAnime(data.data.slice(0,12));
+  }
 }
 
-// // adding event listener for the favourite and recently viewed buttons
-// favourite.addEventListener("click",()=>{
-//     fetchFavouriteAnime();
-// }
-// )
-// async function fetchFavouriteAnime(){
-//     const res = await fetch(`https://api.jikan.moe/v4/top/anime?filter=favorite`);
-//     const data = await res.json();
-//     displayAnime(data.data.slice(0,12));
-// }
+function toggleFavouriteFromDetail(malId) {
+  if (window.currentDetailAnime && window.currentDetailAnime.mal_id === malId) {
+    toggleFavourite(window.currentDetailAnime);
+    showAnimeDetails(window.currentDetailAnime);
+  }
+}
 
-// viewed.addEventListener("click",()=>{
-//     fetchViewedAnime();
-// })
-// async function fetchViewedAnime(){
-//     const res = await fetch(`https://api.jikan.moe/v4/top/anime?filter=bypopularity`);
-//     const data = await res.json();
-//     displayAnime(data.data.slice(0,12));
-// }
-// // performig local storage for the favourite and recently viewed anime  
-// localStorage.setItem("favouriteAnime", JSON.stringify([]));
-// localStorage.setItem("recentlyViewedAnime", JSON.stringify([]));
+function addToRecentlyViewed(anime) {
+  let recent = getRecentlyViewed();
+  recent = recent.filter(a => a.mal_id !== anime.mal_id);
+  recent.unshift(anime);
+  if (recent.length > 10) {
+    recent = recent.slice(0, 10);
+  }
+  localStorage.setItem("recentlyViewed", JSON.stringify(recent));
+}
 
-// function addToFavourite(anime) {
-//     let favouriteAnime = JSON.parse(localStorage.getItem("favouriteAnime"));
-//     if (!favouriteAnime.some(a => a.mal_id === anime.mal_id)) {
-//         favouriteAnime.push(anime);
-//         localStorage.setItem("favouriteAnime", JSON.stringify(favouriteAnime));
-//     }
-// }
+function getRecentlyViewed() {
+  return JSON.parse(localStorage.getItem("recentlyViewed")) || [];
+}
 
-// function addToRecentlyViewed(anime) {
-//     let recentlyViewedAnime = JSON.parse(localStorage.getItem("recentlyViewedAnime"));
-//     if (!recentlyViewedAnime.some(a => a.mal_id === anime.mal_id)) {
-//         recentlyViewedAnime.push(anime);
-//         localStorage.setItem("recentlyViewedAnime", JSON.stringify(recentlyViewedAnime));
-//     }
-// }
+function loadRecentlyViewed() {
+  const recent = getRecentlyViewed();
+  if (recent.length === 0) {
+    displayMessage("Click on any anime to view details!");
+  } else {
+    displayAnime(recent, true);
+  }
+}
 
-// // adding click event to the anime cards to add them to recently viewed
-// document.addEventListener("click", (e) => {
-//     if (e.target.closest(".anime-card")) {
-//         const animeId = e.target.closest(".anime-card").querySelector("h3").textContent;
-//         const anime = {
-//             mal_id: animeId,
-//             title: e.target.closest(".anime-card").querySelector("h3").textContent,
-//             image_url: e.target.closest(".anime-card").querySelector("img").src,
-//             synopsis: e.target.closest(".anime-card").querySelector("p").textContent,
-//             episodes: e.target.closest(".anime-card").querySelector("span").textContent.split(": ")[1]
-//         };
-//         addToRecentlyViewed(anime);
-//     }
-// });
+function getFavourites() {
+  return JSON.parse(localStorage.getItem("favourites")) || [];
+}
+
+function toggleFavourite(anime) {
+  let favs = getFavourites();
+  const exists = favs.some(a => a.mal_id === anime.mal_id);
+  
+  if (exists) {
+    favs = favs.filter(a => a.mal_id !== anime.mal_id);
+  } else {
+    favs.push(anime);
+  }
+  localStorage.setItem("favourites", JSON.stringify(favs));
+}
+
+function loadFavourites() {
+  const favs = getFavourites();
+  if (favs.length === 0) {
+    displayMessage("Add some anime to your favorites!");
+  } else {
+    displayAnime(favs);
+  }
+}
+
+// Event Listeners
+favourites.addEventListener("click", () => {
+  loadFavourites();
+});
+
+viewed.addEventListener("click", () => {
+  loadRecentlyViewed();
+});
+
+genres.addEventListener("change", () => {
+  const genress = genres.value;
+  fetchGenre(genress);
+});
+
+async function fetchGenre(genress) {
+  try {
+    const resultsContainer = document.getElementById("results");
+    resultsContainer.innerHTML = '<div class="loading">Loading genre...</div>';
+    
+    const res = await fetch(`https://api.jikan.moe/v4/anime?genres=${genress}&limit=8`);
+    
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    
+    const data = await res.json();
+    
+    if (!data.data || data.data.length === 0) {
+      displayMessage("No anime found for this genre");
+      return;
+    }
+    
+    currentAnimeList = data.data;
+    displayAnime(currentAnimeList.slice(0, 8));
+  } catch (error) {
+    displayMessage("Error loading genre. Please try again.");
+  }
+}
+
+homebutton.addEventListener("click", () => {
+  fetchHomeAnime();
+});
+
+async function fetchHomeAnime() {
+  const resultsContainer = document.getElementById("results");
+  resultsContainer.innerHTML = '<div class="loading">LOADING SPARROW ANIME...</div>';
+  try {
+    const res = await fetch(`https://api.jikan.moe/v4/top/anime`);
+    
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    
+    const data = await res.json();
+    
+    if (!data.data || data.data.length === 0) {
+      displayMessage("No home anime available");
+      return;
+    }
+    
+    currentAnimeList = data.data;
+    displayAnime(currentAnimeList.slice(0, 12));
+  } catch (error) {
+    console.error("Home fetch error:", error);
+    displayMessage("Please refresh since failed to fetch.");
+  }
+}
+
+// Make functions available globally for onclick handlers
+window.goBackToResults = goBackToResults;
+window.toggleFavouriteFromDetail = toggleFavouriteFromDetail;
+
+// Initialize with home anime
+fetchHomeAnime();
+
+
