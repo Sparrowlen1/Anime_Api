@@ -38,34 +38,36 @@ function displayMessage(message) {
   resultsContainer.innerHTML = `<div class="message">${message}</div>`;
 }
 
-// http get request kwa the external Api
+// get request kwa the external Api
 async function fetchAnime(question) {
   try {
     const resultsContainer = document.getElementById("results");
     resultsContainer.innerHTML = '<div class="loading">Searching for anime...</div>';
     
-    const encodedQuestion = encodeURIComponent(question);
-    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);
+    const encodedQuestion = encodeURIComponent(question);//encodes special characters so that they can be safely included in the URL query string
+    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);//here we have included encoded question na it has been limited to 20 results
     
     if (!res.ok) {
       throw new Error(`API returned ${res.status}`);
     }
     
-    const data = await res.json();
+    const data = await res.json();//response inakuwa in JSON format na we wait for the parsing to completer then we check if its valid and has data
     if (!data || !data.data || data.data.length === 0) {
-      displayMessage(`No results found for "${question}". Try a different anime name.`);
+      displayMessage(`howdy! no results "${question}". mind trying a different?`);
       return;
     }
     
     currentAnimeList = data.data;
     displayAnime(currentAnimeList);
   } catch (error) {
-    console.error("search error:", error);
-    displayMessage(`error searching for "${question}". Please try again later.`);
+    console.error("search error:", error); //logs error to console of the browser
+    displayMessage(`well ill be damned, seems i cant find "${question}" with my vast knowledge. Please try again later my fellow anime enthusiast.`);
   }
 }
 
-function displayAnime(animeList, fromRecentlyViewed = false) {
+function displayAnime(animeList, fromRecentlyViewed = false)
+//lets get the anime list and display it in the results container and clear all the html content
+{
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = "";
   
@@ -76,11 +78,11 @@ function displayAnime(animeList, fromRecentlyViewed = false) {
   
   // Save current list for back navigation
   previousViewList = animeList;
-  
+  // <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}"></img>
   animeList.forEach((anime) => {
-    const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
+    const isFav = getFavourites().some(a => a.mal_id === anime.mal_id); //checks if any fav matches the current anime's ID
     const card = document.createElement("div");
-    card.classList.add("anime-card");
+    card.classList.add("anime-card");//added class to the div
     card.innerHTML = `
       <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}">
       <h3>${anime.title}</h3>
@@ -111,13 +113,13 @@ function displayAnime(animeList, fromRecentlyViewed = false) {
     resultsContainer.appendChild(card);
   });
 }
-
+//after clicking on the anime card this are the details that will be shown below
 function showAnimeDetails(anime) {
   const resultsContainer = document.getElementById("results");
   const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
   
   // synopsis for detail view ni shorter
-  const shortSynopsis = anime.synopsis ? anime.synopsis.slice(0, 15) + "..." : "No synopsis available.";
+  const shortSynopsis = anime.synopsis ? anime.synopsis.slice(0, 150) + "..." : "No synopsis available.";
   
   resultsContainer.innerHTML = `
     <div class="anime-detail">
@@ -135,7 +137,7 @@ function showAnimeDetails(anime) {
           ${anime.title_english ? `<h3>${anime.title_english}</h3>` : ''}
           
           <div class="detail-stats">
-            <div class="stat"> ${anime.score || 'SPARROW'}</div>
+            <div class="stat"> ${anime.score || 'N/A'}</div>
             <div class="stat"> ${anime.episodes || 'Unknown'}</div>
             <div class="stat"> ${anime.year || 'N/A'}</div>
             <div class="stat"> ${anime.status || 'Unknown'}</div>
@@ -154,9 +156,10 @@ function showAnimeDetails(anime) {
     </div>
   `;
   
-  window.currentDetailAnime = anime;
+  window.currentDetailAnime = anime; //stores anime globally for use by other functions like toggleFavouriteFromDetail
 }
 
+// now lets add a functoin to that go back button
 function goBackToResults() {
   if (previousViewList && previousViewList.length > 0) {
     displayAnime(previousViewList);
@@ -164,7 +167,7 @@ function goBackToResults() {
     fetchHomeAnime();
   }
 }
-
+// malID is a parameter that uniquely identifies anime in the MyAnimeList database scrapped into the jikan api
 function toggleFavouriteFromDetail(malId) {
   if (window.currentDetailAnime && window.currentDetailAnime.mal_id === malId) {
     toggleFavourite(window.currentDetailAnime);
@@ -172,6 +175,8 @@ function toggleFavouriteFromDetail(malId) {
   }
 }
 
+
+// this adds,stores and retrieves using setItem and getItem from the local storage of the browser
 function addToRecentlyViewed(anime) {
   let recent = getRecentlyViewed();
   recent = recent.filter(a => a.mal_id !== anime.mal_id);
@@ -185,20 +190,16 @@ function addToRecentlyViewed(anime) {
 function getRecentlyViewed() {
   return JSON.parse(localStorage.getItem("recentlyViewed")) || [];
 }
-
 function loadRecentlyViewed() {
   const recent = getRecentlyViewed();
   if (recent.length === 0) {
-    displayMessage("Click on any anime to view details!");
+    displayMessage("well hello there my fellow anime enthusiast,Click on any anime to view details");
   } else {
     displayAnime(recent, true);
   }
 }
 
-function getFavourites() {
-  return JSON.parse(localStorage.getItem("favourites")) || [];
-}
-
+// this adds,stores and retrieves using setItem and getItem from the local storage of the browser for favourites
 function toggleFavourite(anime) {
   let favs = getFavourites();
   const exists = favs.some(a => a.mal_id === anime.mal_id);
@@ -211,6 +212,9 @@ function toggleFavourite(anime) {
   localStorage.setItem("favourites", JSON.stringify(favs));
 }
 
+function getFavourites() {
+  return JSON.parse(localStorage.getItem("favourites")) || [];
+}
 function loadFavourites() {
   const favs = getFavourites();
   if (favs.length === 0) {
@@ -220,7 +224,7 @@ function loadFavourites() {
   }
 }
 
-// Event Listeners
+// Event Listeners after getting them by id
 favourites.addEventListener("click", () => {
   loadFavourites();
 });
@@ -242,7 +246,7 @@ async function fetchGenre(genress) {
     
     const res = await fetch(`https://api.jikan.moe/v4/anime?genres=${genress}&limit=8`);
     
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    if (!res.ok) throw new Error(`error: ${res.status}`);
     
     const data = await res.json();
     
@@ -254,7 +258,7 @@ async function fetchGenre(genress) {
     currentAnimeList = data.data;
     displayAnime(currentAnimeList.slice(0, 8));
   } catch (error) {
-    displayMessage("Error loading genre. Please try again.");
+    displayMessage("Gomen nasai(sorry), please try again.");
   }
 }
 
@@ -269,7 +273,7 @@ async function fetchHomeAnime() {
   try {
     const res = await fetch(`https://api.jikan.moe/v4/top/anime`);
     
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    if (!res.ok) throw new Error(`error: ${res.status}`);
     
     const data = await res.json();
     
@@ -290,7 +294,7 @@ async function fetchHomeAnime() {
 window.goBackToResults = goBackToResults;
 window.toggleFavouriteFromDetail = toggleFavouriteFromDetail;
 
-// Initialize with home anime
+// Initialize with home anime after page load getting top rated anime
 fetchHomeAnime();
 
 
