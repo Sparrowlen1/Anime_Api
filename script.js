@@ -285,7 +285,7 @@ async function fetchHomeAnime() {
     currentAnimeList = data.data;
     displayAnime(currentAnimeList.slice(0, 12));
   } catch (error) {
-    console.error("Home fetch error:", error);
+    console.error("trouble in paradise:", error);
     displayMessage("Please refresh since failed to fetch.");
   }
 }
