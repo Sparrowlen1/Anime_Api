@@ -44,23 +44,23 @@ async function fetchAnime(question) {
     const resultsContainer = document.getElementById("results");
     resultsContainer.innerHTML = '<div class="loading">Searching for anime...</div>';
     
-    const encodedQuestion = encodeURIComponent(question);
-    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);
+    const encodedQuestion = encodeURIComponent(question);//encodes special characters so that they can be safely included in the URL query string
+    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);//here we have included encoded question na it has been limited to 20 results
     
     if (!res.ok) {
       throw new Error(`API returned ${res.status}`);
     }
     
-    const data = await res.json();
+    const data = await res.json();//response inakuwa in JSON format na we wait for the parsing to completer then we check if its valid and has data
     if (!data || !data.data || data.data.length === 0) {
-      displayMessage(`howdy! no results "${question}". mind trying a different?`);
+      displayMessage(`howdy sparrow no results "${question}". mind trying a different?`);
       return;
     }
     
     currentAnimeList = data.data;
     displayAnime(currentAnimeList);
   } catch (error) {
-    console.error("search error:", error); 
+    console.error("search error:", error); //logs error to console of the browser
     displayMessage(`well ill be damned, seems i cant find "${question}" with my vast knowledge. Please try again later my fellow anime enthusiast.`);
   }
 }
@@ -78,14 +78,14 @@ function displayAnime(animeList, fromRecentlyViewed = false)
   previousViewList = animeList;
   // <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}"></img>
   animeList.forEach((anime) => {
-    const isFav = getFavourites().some(a => a.mal_id === anime.mal_id); 
+    const isFav = getFavourites().some(a => a.mal_id === anime.mal_id); //checks if any fav matches the current anime's ID
     const card = document.createElement("div");
-    card.classList.add("anime-card");
+    card.classList.add("animelet");//added class to the div
     card.innerHTML = `
       <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}">
       <h3>${anime.title}</h3>
-      <p>${anime.synopsis ? anime.synopsis.slice(0, 60) + "..." : "No description"}</p>
-      <span> ${anime.episodes || "Unknown"} eps</span>
+      <p>${anime.synopsis ? anime.synopsis.slice(0, 60) + "..." : "gomen nasai"}</p>
+      <span> ${anime.episodes || "gomen nasai"} eps</span>
       <i class="fa-heart fav-icon ${isFav ? "fa-solid active" : "fa-regular"}"></i>
     `;
     
@@ -112,7 +112,7 @@ function displayAnime(animeList, fromRecentlyViewed = false)
 // });
     card.addEventListener("click", (e) => {
       if (e.target.classList.contains("fav-icon")) {
-        return; 
+        return; //this checks if the click was on the heart icon and if so it stops since the heart has its own eventlistener then we take it to the addrecently and showed anime 
       }
       addToRecentlyViewed(anime);
       showAnimeDetails(anime);
@@ -136,7 +136,7 @@ function showAnimeDetails(anime) {
   const resultsContainer = document.getElementById("results");
   const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
   
-
+  // synopsis for detail view ni shorter
   const shortSynopsis = anime.synopsis ? anime.synopsis.slice(0, 150) + "..." : "No synopsis available.";
   
   resultsContainer.innerHTML = `
@@ -174,19 +174,20 @@ function showAnimeDetails(anime) {
     </div>
   `;
   
-  window.currentDetailAnime = anime; 
+  window.currentDetailAnime = anime; //stores anime globally for use by other functions like toggleFavouriteFromDetail
 }
 
 // now lets add a functoin to that go back button
 function goBackToResults() {
-  //the previousViewList.length > 0 checks we have a valid previous list to go back to which is yes
+  // check if we have a previous view list to go back to if yes we display it otherwise we fetch the home anime
+  //the previousViewList.length > 0 checks Do we have a valid previous list to go back to which is yes
   if (previousViewList && previousViewList.length > 0) {
     displayAnime(previousViewList);
   } else {
     fetchHomeAnime();
   }
 }
-
+// malID is a parameter that uniquely identifies anime in the MyAnimeList database scrapped into the jikan api
 function toggleFavouriteFromDetail(malId) {
   if (window.currentDetailAnime && window.currentDetailAnime.mal_id === malId) {
     toggleFavourite(window.currentDetailAnime);//adds anime to fav if not saved
@@ -199,7 +200,7 @@ function toggleFavouriteFromDetail(malId) {
 function addToRecentlyViewed(anime) {
   let recent = getRecentlyViewed();
   recent = recent.filter(a => a.mal_id !== anime.mal_id);
-  recent.unshift(anime);//simulates update na patch
+  recent.unshift(anime);//simulated this adds at the begining simulates both update and patch
   if (recent.length > 10) {
     recent = recent.slice(0, 10);
   }
@@ -257,6 +258,7 @@ genres.addEventListener("change", () => {
   fetchGenre(genress);
 });
 
+// get request from the api for genre based seachr
 async function fetchGenre(genress) {
   try {
     const resultsContainer = document.getElementById("results");
@@ -284,7 +286,7 @@ homebutton.addEventListener("click", () => {
   fetchHomeAnime();
 });
 
-
+// get request for top-rated anime currently
 async function fetchHomeAnime() {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = '<div class="loading">LOADING SPARROW ANIME...</div>';
@@ -308,9 +310,11 @@ async function fetchHomeAnime() {
   }
 }
 
+// Make functions available globally for onclick handlers
 window.goBackToResults = goBackToResults;
 window.toggleFavouriteFromDetail = toggleFavouriteFromDetail;
 
+// Initialize with home anime after page load getting top rated anime
 fetchHomeAnime();
 
 
