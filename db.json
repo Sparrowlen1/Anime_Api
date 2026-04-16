@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "mal_id": 1,
+      "title": "Fullmetal Alchemist: Brotherhood",
+      "title_english": "Fullmetal Alchemist: Brotherhood",
+      "episodes": 64,
+      "score": 9.09,
+      "year": 2009,
+      "status": "Finished Airing",
+      "synopsis": "Two brothers search for the Philosopher's Stone to restore their bodies after a failed alchemical experiment.",
+      "images": {
+        "jpg": {
+          "image_url": "https://cdn.myanimelist.net/images/anime/1223/96541.jpg",
+          "large_image_url": "https://cdn.myanimelist.net/images/anime/1223/96541l.jpg"
+        }
+      },
+      "genres": [
+        {"mal_id": 1, "name": "Action"},
+        {"mal_id": 10, "name": "Fantasy"}
+      ]
+    },
+    {
+      "mal_id": 2,
+      "title": "Steins;Gate",
+      "title_english": "Steins;Gate",
+      "episodes": 24,
+      "score": 9.07,
+      "year": 2011,
+      "status": "Finished Airing",
+      "synopsis": "A self-proclaimed mad scientist discovers time travel and must deal with its consequences.",
+      "images": {
+        "jpg": {
+          "image_url": "https://cdn.myanimelist.net/images/anime/5/73199.jpg",
+          "large_image_url": "https://cdn.myanimelist.net/images/anime/5/73199l.jpg"
+        }
+      },
+      "genres": [
+        {"mal_id": 24, "name": "Sci-Fi"},
+        {"mal_id": 41, "name": "Suspense"}
+      ]
+    }
+  ],
+  "pagination": {
+    "last_visible_page": 25,
+    "has_next_page": true
+  }
+}
+// const res = await fetch('sample-anime-data.json');

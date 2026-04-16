@@ -74,9 +74,7 @@ function displayAnime(animeList, fromRecentlyViewed = false)
   if (!animeList || animeList.length === 0) {
     displayMessage("No anime to display");
     return;
-  }
-  
-  // Save current list for back navigation
+  }//saves list for back button
   previousViewList = animeList;
   // <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}"></img>
   animeList.forEach((anime) => {
@@ -91,10 +89,30 @@ function displayAnime(animeList, fromRecentlyViewed = false)
       <i class="fa-heart fav-icon ${isFav ? "fa-solid active" : "fa-regular"}"></i>
     `;
     
-    // Make entire card clickable to view details
+    // lets add a netflix concept using return and stopPropagation
+    // Make entire card clickable to view details;;we can use closest() but why not just check if the click was on the heart icon and if so stop it since the heart has its own eventlistener then we take it to the addrecently and showed anime details
+    // card.addEventListener("click", (e) => {
+//   const favlicked = e.target.closest(".fav-icon");
+
+//   if (favlicked) {
+//     e.stopPropagation();
+//     toggleFavourite(anime);
+
+//     if (fromRecentlyViewed) {
+//       loadRecentlyViewed();
+//     } else {
+//       displayAnime(animeList);
+//     }
+
+//     return;
+//   }
+
+//   addToRecentlyViewed(anime);
+//   showAnimeDetails(anime);
+// });
     card.addEventListener("click", (e) => {
       if (e.target.classList.contains("fav-icon")) {
-        return;
+        return; //this checks if the click was on the heart icon and if so it stops since the heart has its own eventlistener then we take it to the addrecently and showed anime 
       }
       addToRecentlyViewed(anime);
       showAnimeDetails(anime);
@@ -102,12 +120,12 @@ function displayAnime(animeList, fromRecentlyViewed = false)
     
     const heart = card.querySelector(".fav-icon");
     heart.addEventListener("click", (e) => {
-      e.stopPropagation();
+      e.stopPropagation(); //without this the click itatrigger hadi the card click
       toggleFavourite(anime);
       if (fromRecentlyViewed) {
-        loadRecentlyViewed();
+        loadRecentlyViewed();//refrehses from storage
       } else {
-        displayAnime(animeList);
+        displayAnime(animeList);//refreshes from the current list in view
       }
     });
     resultsContainer.appendChild(card);
@@ -137,10 +155,10 @@ function showAnimeDetails(anime) {
           ${anime.title_english ? `<h3>${anime.title_english}</h3>` : ''}
           
           <div class="detail-stats">
-            <div class="stat"> ${anime.score || 'N/A'}</div>
-            <div class="stat"> ${anime.episodes || 'Unknown'}</div>
-            <div class="stat"> ${anime.year || 'N/A'}</div>
-            <div class="stat"> ${anime.status || 'Unknown'}</div>
+            <div class="stat"> ${anime.score || 'null'}</div>
+            <div class="stat"> ${anime.episodes || 'nulepisods'}</div>
+            <div class="stat"> ${anime.year || 'not proven'}</div>
+            <div class="stat"> ${anime.status || 'dont know'}</div>
           </div>
           
           <div class="detail-genres">
@@ -161,6 +179,8 @@ function showAnimeDetails(anime) {
 
 // now lets add a functoin to that go back button
 function goBackToResults() {
+  // check if we have a previous view list to go back to if yes we display it otherwise we fetch the home anime
+  //the previousViewList.length > 0 checks Do we have a valid previous list to go back to which is yes
   if (previousViewList && previousViewList.length > 0) {
     displayAnime(previousViewList);
   } else {
@@ -170,13 +190,13 @@ function goBackToResults() {
 // malID is a parameter that uniquely identifies anime in the MyAnimeList database scrapped into the jikan api
 function toggleFavouriteFromDetail(malId) {
   if (window.currentDetailAnime && window.currentDetailAnime.mal_id === malId) {
-    toggleFavourite(window.currentDetailAnime);
-    showAnimeDetails(window.currentDetailAnime);
+    toggleFavourite(window.currentDetailAnime);//adds anime to fav if not saved
+    showAnimeDetails(window.currentDetailAnime);//refreshes the details view to update the fav button state
   }
 }
 
 
-// this adds,stores and retrieves using setItem and getItem from the local storage of the browser
+// this adds,stores and retrieves using setItem and getItem from the local storage of the browser for recently viwed
 function addToRecentlyViewed(anime) {
   let recent = getRecentlyViewed();
   recent = recent.filter(a => a.mal_id !== anime.mal_id);
@@ -191,11 +211,11 @@ function getRecentlyViewed() {
   return JSON.parse(localStorage.getItem("recentlyViewed")) || [];
 }
 function loadRecentlyViewed() {
-  const recent = getRecentlyViewed();
+  const recent = getRecentlyViewed(); //reads from storage since been saved
   if (recent.length === 0) {
     displayMessage("well hello there my fellow anime enthusiast,Click on any anime to view details");
   } else {
-    displayAnime(recent, true);
+    displayAnime(recent, true);//local stor aint empty
   }
 }
 
