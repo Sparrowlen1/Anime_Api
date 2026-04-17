@@ -37,21 +37,18 @@ function displayMessage(message) {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = `<div class="message">${message}</div>`;
 }
-
-// get request kwa the external Api
 async function fetchAnime(question) {
   try {
     const resultsContainer = document.getElementById("results");
     resultsContainer.innerHTML = '<div class="loading">Searching for anime...</div>';
     
-    const encodedQuestion = encodeURIComponent(question);//encodes special characters so that they can be safely included in the URL query string
-    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);//here we have included encoded question na it has been limited to 20 results
-    
+    const encodedQuestion = encodeURIComponent(question);
+    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodedQuestion}&limit=20`);
     if (!res.ok) {
       throw new Error(`API returned ${res.status}`);
     }
     
-    const data = await res.json();//response inakuwa in JSON format na we wait for the parsing to completer then we check if its valid and has data
+    const data = await res.json();
     if (!data || !data.data || data.data.length === 0) {
       displayMessage(`howdy sparrow no results "${question}". mind trying a different?`);
       return;
@@ -65,8 +62,8 @@ async function fetchAnime(question) {
   }
 }
 
-function displayAnime(animeList, fromRecentlyViewed = false)
 //lets get the anime list and display it in the results container and clear all the html content
+function displayAnime(animeList, fromRecentlyViewed = false)
 {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = "";
@@ -74,13 +71,13 @@ function displayAnime(animeList, fromRecentlyViewed = false)
   if (!animeList || animeList.length === 0) {
     displayMessage("No anime to display");
     return;
-  }//saves list for back button
+  }
   previousViewList = animeList;
   // <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}"></img>
   animeList.forEach((anime) => {
     const isFav = getFavourites().some(a => a.mal_id === anime.mal_id); //checks if any fav matches the current anime's ID
     const card = document.createElement("div");
-    card.classList.add("animelet");//added class to the div
+    card.classList.add("animelet");
     card.innerHTML = `
       <img src="${anime.images?.jpg?.image_url || 'https://via.placeholder.com/225x319?text=No+Image'}" alt="${anime.title}">
       <h3>${anime.title}</h3>
@@ -112,7 +109,7 @@ function displayAnime(animeList, fromRecentlyViewed = false)
 // });
     card.addEventListener("click", (e) => {
       if (e.target.classList.contains("fav-icon")) {
-        return; //this checks if the click was on the heart icon and if so it stops since the heart has its own eventlistener then we take it to the addrecently and showed anime 
+        return; 
       }
       addToRecentlyViewed(anime);
       showAnimeDetails(anime);
@@ -120,25 +117,22 @@ function displayAnime(animeList, fromRecentlyViewed = false)
     
     const heart = card.querySelector(".fav-icon");
     heart.addEventListener("click", (e) => {
-      e.stopPropagation(); //without this the click itatrigger hadi the card click
+      e.stopPropagation(); 
       toggleFavourite(anime);
       if (fromRecentlyViewed) {
-        loadRecentlyViewed();//refrehses from storage
+        loadRecentlyViewed();
       } else {
-        displayAnime(animeList);//refreshes from the current list in view
+        displayAnime(animeList);
       }
     });
     resultsContainer.appendChild(card);
   });
 }
-//after clicking on the anime card this are the details that will be shown below
+
 function showAnimeDetails(anime) {
   const resultsContainer = document.getElementById("results");
   const isFav = getFavourites().some(a => a.mal_id === anime.mal_id);
-  
-  // synopsis for detail view ni shorter
   const shortSynopsis = anime.synopsis ? anime.synopsis.slice(0, 150) + "..." : "No synopsis available.";
-  
   resultsContainer.innerHTML = `
     <div class="anime-detail">
       <button class="back-button" onclick="window.goBackToResults()"> Back to Results</button>
@@ -174,24 +168,22 @@ function showAnimeDetails(anime) {
     </div>
   `;
   
-  window.currentDetailAnime = anime; //stores anime globally for use by other functions like toggleFavouriteFromDetail
+  window.currentDetailAnime = anime; 
 }
 
 // now lets add a functoin to that go back button
 function goBackToResults() {
-  // check if we have a previous view list to go back to if yes we display it otherwise we fetch the home anime
-  //the previousViewList.length > 0 checks Do we have a valid previous list to go back to which is yes
   if (previousViewList && previousViewList.length > 0) {
     displayAnime(previousViewList);
   } else {
     fetchHomeAnime();
   }
 }
-// malID is a parameter that uniquely identifies anime in the MyAnimeList database scrapped into the jikan api
+
 function toggleFavouriteFromDetail(malId) {
   if (window.currentDetailAnime && window.currentDetailAnime.mal_id === malId) {
-    toggleFavourite(window.currentDetailAnime);//adds anime to fav if not saved
-    showAnimeDetails(window.currentDetailAnime);//refreshes the details view to update the fav button state
+    toggleFavourite(window.currentDetailAnime);
+    showAnimeDetails(window.currentDetailAnime);
   }
 }
 
@@ -244,7 +236,6 @@ function loadFavourites() {
   }
 }
 
-// Event Listeners after getting them by id
 favourites.addEventListener("click", () => {
   loadFavourites();
 });
@@ -258,7 +249,6 @@ genres.addEventListener("change", () => {
   fetchGenre(genress);
 });
 
-// get request from the api for genre based seachr
 async function fetchGenre(genress) {
   try {
     const resultsContainer = document.getElementById("results");
@@ -286,7 +276,6 @@ homebutton.addEventListener("click", () => {
   fetchHomeAnime();
 });
 
-// get request for top-rated anime currently
 async function fetchHomeAnime() {
   const resultsContainer = document.getElementById("results");
   resultsContainer.innerHTML = '<div class="loading">LOADING SPARROW ANIME...</div>';
@@ -310,11 +299,9 @@ async function fetchHomeAnime() {
   }
 }
 
-// Make functions available globally for onclick handlers
 window.goBackToResults = goBackToResults;
 window.toggleFavouriteFromDetail = toggleFavouriteFromDetail;
 
-// Initialize with home anime after page load getting top rated anime
 fetchHomeAnime();
 
 
