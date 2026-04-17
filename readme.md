@@ -12,3 +12,5 @@ https://anime-api-lac-six.vercel.app/
 -favtab: this contains the fav list of your fav anime once marked or checked the heart icon
 -recentlyviewed; this gets the recentlyviewed after clicking the animelist card 
 -modernized design with video: user friendliness
+-localstorage: to save favourite and recently viewed items
+ -provides an error feedback mechanism by getting res from the jikan api either error 404 or 202 for oko
